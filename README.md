@@ -85,6 +85,30 @@ Payload tạo circuit:
 
 Khi cập nhật, client phải gửi `version`. Nếu file đã được sửa trên máy khác, API trả `409 Conflict` để tránh ghi đè dữ liệu.
 
+## CircuitTH cloud sync
+
+CircuitTH đã có thể đăng nhập trực tiếp vào LabManager và đồng bộ file mạch.
+
+Chạy API trước:
+
+```powershell
+docker compose up -d --build
+```
+
+Sau đó chạy CircuitTH tại cổng `5173`. CircuitTH mặc định gọi:
+
+```text
+http://localhost:4000/api
+```
+
+Khi triển khai production, đặt biến môi trường của CircuitTH:
+
+```env
+VITE_LAB_API_URL=https://api.example.com/api
+```
+
+Đồng thời thêm domain CircuitTH vào `CORS_ORIGIN` của LabManager.
+
 ## Bảo mật cần làm trước production
 
 - Dùng password và JWT secret mạnh.
