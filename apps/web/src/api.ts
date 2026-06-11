@@ -21,7 +21,15 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(typeof body.error === 'string' ? body.error : 'Request failed');
+    if (typeof body.error === 'string') throw new Error(body.error);
+
+    const fieldErrors = body.error?.fieldErrors;
+    if (fieldErrors && typeof fieldErrors === 'object') {
+      const messages = Object.values(fieldErrors).flat().filter(Boolean);
+      if (messages.length > 0) throw new Error(messages.join('. '));
+    }
+
+    throw new Error(`Request failed (${response.status})`);
   }
   return response.status === 204 ? undefined as T : response.json();
 }

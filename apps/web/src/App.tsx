@@ -112,8 +112,18 @@ export default function App() {
   async function saveMember(event: React.FormEvent) {
     event.preventDefault();
     setError('');
+    if (!editingId && memberForm.password.length < 8) {
+      setError('Mật khẩu phải có ít nhất 8 ký tự');
+      return;
+    }
     try {
-      const body = { ...memberForm } as typeof memberForm;
+      const body = {
+        ...memberForm,
+        email: memberForm.email.trim(),
+        fullName: memberForm.fullName.trim(),
+        studentCode: memberForm.studentCode.trim() || null,
+        phone: memberForm.phone.trim() || null,
+      } as typeof memberForm & { studentCode: string | null; phone: string | null };
       if (editingId && !body.password) delete (body as Partial<typeof body>).password;
       if (editingId) {
         await api(`/members/${editingId}`, { method: 'PATCH', body: JSON.stringify(body) });
@@ -251,7 +261,7 @@ export default function App() {
             <div className="formGrid">
               <label>Họ tên<input required value={memberForm.fullName} onChange={e => setMemberForm({ ...memberForm, fullName: e.target.value })} /></label>
               <label>Email<input type="email" required value={memberForm.email} onChange={e => setMemberForm({ ...memberForm, email: e.target.value })} /></label>
-              <label>Mật khẩu<input type="password" required={!editingId} placeholder={editingId ? 'Để trống nếu không đổi' : 'Tối thiểu 8 ký tự'} value={memberForm.password} onChange={e => setMemberForm({ ...memberForm, password: e.target.value })} /></label>
+              <label>Mật khẩu<input type="password" minLength={editingId ? undefined : 8} required={!editingId} placeholder={editingId ? 'Để trống nếu không đổi' : 'Tối thiểu 8 ký tự'} value={memberForm.password} onChange={e => setMemberForm({ ...memberForm, password: e.target.value })} /></label>
               <label>Mã sinh viên<input value={memberForm.studentCode} onChange={e => setMemberForm({ ...memberForm, studentCode: e.target.value })} /></label>
               <label>Số điện thoại<input value={memberForm.phone} onChange={e => setMemberForm({ ...memberForm, phone: e.target.value })} /></label>
               <label>Vai trò<select value={memberForm.role} onChange={e => setMemberForm({ ...memberForm, role: e.target.value as Role })}><option value="member">Member</option><option value="admin">Admin</option></select></label>

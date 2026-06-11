@@ -23,6 +23,18 @@ const memberSchema = z.object({
     status: z.enum(['active', 'inactive']).default('active'),
 });
 const memberPatchSchema = memberSchema.partial();
+function validationMessage(error) {
+    return error.issues.map(issue => {
+        const field = issue.path.join('.') || 'data';
+        if (field === 'password' && issue.code === 'too_small')
+            return 'Mật khẩu phải có ít nhất 8 ký tự';
+        if (field === 'email')
+            return 'Email không hợp lệ';
+        if (field === 'fullName' && issue.code === 'too_small')
+            return 'Họ tên phải có ít nhất 2 ký tự';
+        return `${field}: ${issue.message}`;
+    }).join('. ');
+}
 async function ensureAdmin() {
     const email = process.env.ADMIN_EMAIL;
     const password = process.env.ADMIN_PASSWORD;
@@ -59,7 +71,7 @@ app.get('/api/members', requireAuth, requireAdmin, async (_req, res) => {
 app.post('/api/members', requireAuth, requireAdmin, async (req, res) => {
     const parsed = memberSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.flatten() });
+        return res.status(400).json({ error: validationMessage(parsed.error) });
     const data = parsed.data;
     const hash = await bcrypt.hash(data.password, 12);
     try {
@@ -75,7 +87,7 @@ app.post('/api/members', requireAuth, requireAdmin, async (req, res) => {
 app.patch('/api/members/:id', requireAuth, requireAdmin, async (req, res) => {
     const parsed = memberPatchSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.flatten() });
+        return res.status(400).json({ error: validationMessage(parsed.error) });
     const data = parsed.data;
     const current = await query('SELECT * FROM users WHERE id = $1', [req.params.id]);
     if (!current.rows[0])
