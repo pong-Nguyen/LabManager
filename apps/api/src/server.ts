@@ -166,7 +166,9 @@ app.post('/api/circuits', requireAuth, async (req: AuthRequest, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const result = await query(
     `INSERT INTO circuits (name, owner_id, project_id, schematic, sim_config)
-     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, name, owner_id AS "ownerId", project_id AS "projectId", schematic,
+     sim_config AS "simConfig", version, created_at AS "createdAt", updated_at AS "updatedAt"`,
     [parsed.data.name, req.user!.id, parsed.data.projectId, parsed.data.schematic, parsed.data.simConfig],
   );
   res.status(201).json(result.rows[0]);
@@ -195,7 +197,9 @@ app.put('/api/circuits/:id', requireAuth, async (req: AuthRequest, res) => {
   const result = await query(
     `UPDATE circuits SET name=$1, project_id=$2, schematic=$3, sim_config=$4,
      version=version+1, updated_at=NOW()
-     WHERE id=$5 AND owner_id=$6 AND version=$7 RETURNING *`,
+     WHERE id=$5 AND owner_id=$6 AND version=$7
+     RETURNING id, name, owner_id AS "ownerId", project_id AS "projectId", schematic,
+     sim_config AS "simConfig", version, created_at AS "createdAt", updated_at AS "updatedAt"`,
     [parsed.data.name, parsed.data.projectId, parsed.data.schematic, parsed.data.simConfig, req.params.id, req.user!.id, parsed.data.version],
   );
   if (!result.rows[0]) return res.status(409).json({ error: 'Circuit changed on another device; reload before saving' });
